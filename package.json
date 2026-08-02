@@ -1,0 +1,39 @@
+{
+  "name": "blog_extractor",
+  "version": "1.0.0",
+  "description": "Naver Blog Extractor and Notion Exporter with MCP Integration",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "web": "tsx src/index.ts web",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "naver-blog",
+    "crawler",
+    "notion",
+    "mcp",
+    "blog-extractor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@notionhq/client": "^2.2.15",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "pino": "^9.0.0",
+    "playwright": "^1.45.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.14.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.5"
+  }
+}

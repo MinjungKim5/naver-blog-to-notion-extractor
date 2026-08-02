@@ -1,0 +1,20 @@
+# Environment variables & Sensitive Credentials
+.env
+.env.local
+config.json
+
+# Dependencies
+node_modules/
+
+# Build Output
+dist/
+
+# Local Storage / Crawled Assets
+storage/
+*.log
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

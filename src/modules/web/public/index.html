@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Naver Blog Extractor Studio</title>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --bg-card-hover: rgba(51, 65, 85, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --border-accent: rgba(99, 102, 241, 0.4);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --terminal-bg: #090d16;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-green));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+
+    .logo-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      color: var(--accent-green);
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .input-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.8rem 1.25rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color: #ffffff;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Tabs */
+    .tab-group {
+      display: flex;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 0.6rem;
+      text-align: center;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Terminal Console */
+    .terminal-container {
+      background: var(--terminal-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 380px;
+    }
+
+    .terminal-header {
+      background: rgba(30, 41, 59, 0.5);
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .terminal-body {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      margin-bottom: 0.3rem;
+      word-break: break-all;
+    }
+
+    .log-time {
+      color: #64748b;
+      margin-right: 0.5rem;
+    }
+
+    .log-info { color: #38bdf8; }
+    .log-success { color: #4ade80; }
+    .log-warn { color: #facc15; }
+    .log-error { color: #f87171; }
+
+    /* Result Card */
+    .result-box {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+      display: none;
+    }
+
+    .result-box.active {
+      display: block;
+    }
+
+    .notion-link {
+      color: var(--accent-green);
+      font-weight: 600;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-group">
+        <div class="logo-icon">
+          <i data-lucide="sparkles" style="color: white;"></i>
+        </div>
+        <div>
+          <div class="logo-title">Blog Extractor Studio</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">네이버 블로그 ➔ 노션 자동 포팅 시스템</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span id="sseStatus">실시간 연결됨</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+      <!-- Left Column: Settings & Controls -->
+      <div>
+        <!-- API Credentials Card -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">
+            <i data-lucide="key-round" style="color: var(--primary);"></i>
+            API Key & 로그인 세션 설정
+          </div>
+          <form id="configForm">
+            <div class="form-group">
+              <label>Notion API Key (Integration Token)</label>
+              <input type="password" id="notionApiKey" class="input-control" placeholder="secret_********************">
+            </div>
+            <div class="form-group">
+              <label>Notion Parent Page / Database ID</label>
+              <input type="text" id="notionParentPageId" class="input-control" placeholder="32자리 노션 페이지 또는 DB ID">
+            </div>
+            <div class="row-2">
+              <div class="form-group">
+                <label>Naver NID_AUT (선택)</label>
+                <input type="password" id="naverNidAut" class="input-control" placeholder="쿠키 값">
+              </div>
+              <div class="form-group">
+                <label>Naver NID_SES (선택)</label>
+                <input type="password" id="naverNidSes" class="input-control" placeholder="쿠키 값">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-secondary">
+              <i data-lucide="save"></i>
+              설정 저장 (config.json)
+            </button>
+          </form>
+        </div>
+
+        <!-- Extraction Controls Card -->
+        <div class="card">
+          <div class="tab-group">
+            <button class="tab-btn active" onclick="switchTab('single')">단건 포스트 추출</button>
+            <button class="tab-btn" onclick="switchTab('batch')">최근 글 배치 수집</button>
+          </div>
+
+          <!-- Single Extraction Tab -->
+          <div id="tab-single" class="tab-content active">
+            <form id="singleForm">
+              <div class="form-group">
+                <label>네이버 블로그 포스트 URL</label>
+                <input type="url" id="singleUrl" class="input-control" placeholder="https://blog.naver.com/id/123456789" required>
+              </div>
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="exportToNotion" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <label for="exportToNotion" style="margin-bottom: 0; cursor: pointer;">Notion으로 자동 내보내기</label>
+              </div>
+              <button type="submit" id="btnSingleRun" class="btn btn-primary">
+                <i data-lucide="play"></i>
+                포스트 추출 및 노션 변환 시작
+              </button>
+            </form>
+          </div>
+
+          <!-- Batch Extraction Tab -->
+          <div id="tab-batch" class="tab-content">
+            <form id="batchForm">
+              <div class="form-group">
+                <label>네이버 블로그 URL 또는 ID</label>
+                <input type="text" id="batchBlog" class="input-control" placeholder="https://blog.naver.com/myblogid" required>
+              </div>
+              <div class="row-2">
+                <div class="form-group">
+                  <label>수집 개수 (--count)</label>
+                  <input type="number" id="batchCount" class="input-control" value="5" min="1" max="50">
+                </div>
+                <div class="form-group">
+                  <label>시작 페이지 (--page)</label>
+                  <input type="number" id="batchPage" class="input-control" value="1" min="1">
+                </div>
+              </div>
+              <button type="submit" id="btnBatchRun" class="btn btn-primary">
+                <i data-lucide="layers"></i>
+                배치 크롤링 및 DB 추출 시작
+              </button>
+            </form>
+          </div>
+
+          <!-- Result Card -->
+          <div id="resultBox" class="result-box">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">🎉 처리 완료!</div>
+            <div id="resultContent" style="font-size: 0.9rem;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Real-time Terminal Console -->
+      <div>
+        <div class="card">
+          <div class="card-title" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <i data-lucide="terminal" style="color: var(--accent-green);"></i>
+              실시간 실행 로그 Terminal
+            </div>
+            <button onclick="clearLogs()" style="background: none; border: none; color: var(--text-muted); cursor: pointer;" title="로그 지우기">
+              <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+          <div class="terminal-container">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
+              </div>
+              <span>bash - blog-extractor-stream</span>
+            </div>
+            <div id="terminalBody" class="terminal-body">
+              <div class="log-entry">
+                <span class="log-time">[System]</span>
+                <span class="log-info">실시간 로그 콘솔 준비 완료.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Tab Switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabName === 'single') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-single').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-batch').classList.add('active');
+      }
+    }
+
+    // Clear Terminal Logs
+    function clearLogs() {
+      document.getElementById('terminalBody').innerHTML = '';
+    }
+
+    // Append Log to Terminal
+    function appendLog(level, message, timestamp) {
+      const body = document.getElementById('terminalBody');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.textContent = `[${timestamp || new Date().toLocaleTimeString()}]`;
+
+      const msgSpan = document.createElement('span');
+      msgSpan.className = `log-${level || 'info'}`;
+      msgSpan.textContent = message;
+
+      entry.appendChild(timeSpan);
+      entry.appendChild(msgSpan);
+      body.appendChild(entry);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    // Connect SSE Stream
+    function initSse() {
+      const evtSource = new EventSource('/api/stream');
+      evtSource.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          appendLog(data.level, data.message, data.timestamp);
+        } catch (err) {
+          console.error('Failed to parse SSE event', err);
+        }
+      };
+      evtSource.onerror = () => {
+        document.getElementById('sseStatus').textContent = '재연결 중...';
+      };
+      evtSource.onopen = () => {
+        document.getElementById('sseStatus').textContent = '실시간 연결됨';
+      };
+    }
+
+    // Load Existing Configuration
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        if (data.raw) {
+          document.getElementById('notionApiKey').value = data.raw.notionApiKey || '';
+          document.getElementById('notionParentPageId').value = data.raw.notionParentPageId || '';
+          document.getElementById('naverNidAut').value = data.raw.naverNidAut || '';
+          document.getElementById('naverNidSes').value = data.raw.naverNidSes || '';
+        }
+      } catch (err) {
+        console.error('Failed to load config', err);
+      }
+    }
+
+    // Save Configuration
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        notionApiKey: document.getElementById('notionApiKey').value,
+        notionParentPageId: document.getElementById('notionParentPageId').value,
+        naverNidAut: document.getElementById('naverNidAut').value,
+        naverNidSes: document.getElementById('naverNidSes').value,
+      };
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ 설정이 성공적으로 저장되었습니다!');
+        }
+      } catch (err) {
+        alert('❌ 설정 저장 실패: ' + err.message);
+      }
+    });
+
+    // Single Post Form Submit
+    document.getElementById('singleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSingleRun');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 처리 중...';
+
+      const resultBox = document.getElementById('resultBox');
+      resultBox.classList.remove('active');
+
+      const url = document.getElementById('singleUrl').value;
+      const exportToNotion = document.getElementById('exportToNotion').checked;
+
+      try {
+        const res = await fetch('/api/extract/single', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, exportToNotion })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          resultBox.classList.add('active');
+          let html = `<strong>[${data.post.category || '카테고리 없음'}] ${data.post.title}</strong><br>`;
+          html += `파싱된 총 블록 수: ${data.post.blocksCount}개<br>`;
+
+          if (data.notion && data.notion.pageUrl) {
+            html += `👉 노션 페이지 URL: <a class="notion-link" href="${data.notion.pageUrl}" target="_blank">${data.notion.pageUrl}</a>`;
+          }
+          document.getElementById('resultContent').innerHTML = html;
+        } else {
+          alert('❌ 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+      } catch (err) {
+        alert('❌ 오류 발생: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play"></i> 포스트 추출 및 노션 변환 시작';
+        lucide.createIcons();
+      }
+    });
+
+    // Batch Form Submit
+    document.getElementById('batchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnBatchRun');
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 배치 크롤링 진행 중...';
+
+      const resultBox = document.getElementById('resultBox');
+      resultBox.classList.remove('active');
+
+      const blogUrlOrId = document.getElementById('batchBlog').value;
+      const count = document.getElementById('batchCount').value;
+      const pageNum = document.getElementById('batchPage').value;
+
+      try {
+        const res = await fetch('/api/extract/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ blogUrlOrId, count, pageNum })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          resultBox.classList.add('active');
+          document.getElementById('resultContent').innerHTML = `✅ 최근 글 배치 크롤링 및 노션 DB 저장 작업이 완료되었습니다!`;
+        } else {
+          alert('❌ 실패: ' + (data.error || '알 수 없는 오류'));
+        }
+      } catch (err) {
+        alert('❌ 오류 발생: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="layers"></i> 배치 크롤링 및 DB 추출 시작';
+        lucide.createIcons();
+      }
+    });
+
+    // Start App
+    initSse();
+    loadConfig();
+  </script>
+</body>
+</html>

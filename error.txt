@@ -1,0 +1,11 @@
+
+[1/5] Processing: "하만카돈 오닉스 7 배터리 수리/개조 (3/4)" (https://blog.naver.com/grain_kim/224335842373)...
+@notionhq/client warn: request fail {
+  code: 'validation_error',
+  message: 'Name is not a property that exists. URL is not a property that exists.'
+}
+@notionhq/client warn: request fail {
+  code: 'object_not_found',
+  message: 'Could not find page with ID: 3a51bce9-29b6-80ce-9a37-f8ac039e0b6c. Make sure the relevant pages and databases are shared with your integration "노션토큰".'
+}
+  ❌ Failed to process post https://blog.naver.com/grain_kim/224335842373: Could not find page with ID: 3a51bce9-29b6-80ce-9a37-f8ac039e0b6c. Make sure the relevant pages and databases are shared with your integration "노션토큰".
