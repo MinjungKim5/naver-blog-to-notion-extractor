@@ -60,7 +60,7 @@ Example:
     const { WebServer } = await import('./modules/web/web-server.js');
     const { exec } = await import('child_process');
 
-    const webServer = new WebServer(3000);
+    const webServer = new WebServer(3105);
     const port = await webServer.start();
     const targetUrl = `http://localhost:${port}`;
 

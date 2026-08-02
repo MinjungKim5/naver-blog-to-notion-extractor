@@ -23,7 +23,7 @@ export class WebServer {
   private clientIdCounter = 0;
   private port: number;
 
-  constructor(port = 3000) {
+  constructor(port = 3105) {
     this.port = port;
     this.setupMiddleware();
     this.setupRoutes();
