@@ -323,6 +323,9 @@
     .log-warn { color: #facc15; }
     .log-error { color: #f87171; }
 
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
     /* Result Card */
     .result-box {
       margin-top: 1.25rem;
@@ -533,9 +536,16 @@
       body.scrollTop = body.scrollHeight;
     }
 
+    // Resolve API URL dynamically for root ('/') or subpath ('/blog')
+    function apiUrl(endpoint) {
+      const isBlogPath = window.location.pathname.startsWith('/blog');
+      const base = isBlogPath ? '/blog' : '';
+      return `${base}${endpoint}`;
+    }
+
     // Connect SSE Stream
     function initSse() {
-      const evtSource = new EventSource('/api/stream');
+      const evtSource = new EventSource(apiUrl('/api/stream'));
       evtSource.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
@@ -555,7 +565,7 @@
     // Load Existing Configuration
     async function loadConfig() {
       try {
-        const res = await fetch('/api/config');
+        const res = await fetch(apiUrl('/api/config'));
         const data = await res.json();
         if (data.raw) {
           document.getElementById('notionApiKey').value = data.raw.notionApiKey || '';
@@ -579,7 +589,7 @@
       };
 
       try {
-        const res = await fetch('/api/config', {
+        const res = await fetch(apiUrl('/api/config'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -599,6 +609,7 @@
       const btn = document.getElementById('btnSingleRun');
       btn.disabled = true;
       btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 처리 중...';
+      lucide.createIcons();
 
       const resultBox = document.getElementById('resultBox');
       resultBox.classList.remove('active');
@@ -607,7 +618,7 @@
       const exportToNotion = document.getElementById('exportToNotion').checked;
 
       try {
-        const res = await fetch('/api/extract/single', {
+        const res = await fetch(apiUrl('/api/extract/single'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, exportToNotion })
@@ -641,6 +652,7 @@
       const btn = document.getElementById('btnBatchRun');
       btn.disabled = true;
       btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> 배치 크롤링 진행 중...';
+      lucide.createIcons();
 
       const resultBox = document.getElementById('resultBox');
       resultBox.classList.remove('active');
@@ -650,7 +662,7 @@
       const pageNum = document.getElementById('batchPage').value;
 
       try {
-        const res = await fetch('/api/extract/batch', {
+        const res = await fetch(apiUrl('/api/extract/batch'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ blogUrlOrId, count, pageNum })

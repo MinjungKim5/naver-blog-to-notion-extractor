@@ -60,7 +60,8 @@ Example:
     const { WebServer } = await import('./modules/web/web-server.js');
     const { exec } = await import('child_process');
 
-    const webServer = new WebServer(3105);
+    const defaultPort = process.env.PORT ? parseInt(process.env.PORT, 10) : 13109;
+    const webServer = new WebServer(defaultPort);
     const port = await webServer.start();
     const targetUrl = `http://localhost:${port}`;
 

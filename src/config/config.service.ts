@@ -32,13 +32,21 @@ export class ConfigService {
       }
     }
 
+    const credentials = {
+      notionApiKey: jsonConfig.notionApiKey || process.env.NOTION_API_KEY || '',
+      notionParentPageId: jsonConfig.notionParentPageId || process.env.NOTION_PARENT_PAGE_ID || '',
+      naverNidAut: jsonConfig.naverNidAut || process.env.NAVER_NID_AUT || '',
+      naverNidSes: jsonConfig.naverNidSes || process.env.NAVER_NID_SES || '',
+    };
+
+    // Keep process.env in sync with the active credentials
+    if (credentials.notionApiKey) process.env.NOTION_API_KEY = credentials.notionApiKey;
+    if (credentials.notionParentPageId) process.env.NOTION_PARENT_PAGE_ID = credentials.notionParentPageId;
+    if (credentials.naverNidAut) process.env.NAVER_NID_AUT = credentials.naverNidAut;
+    if (credentials.naverNidSes) process.env.NAVER_NID_SES = credentials.naverNidSes;
+
     return {
-      credentials: {
-        notionApiKey: process.env.NOTION_API_KEY || jsonConfig.notionApiKey || '',
-        notionParentPageId: process.env.NOTION_PARENT_PAGE_ID || jsonConfig.notionParentPageId || '',
-        naverNidAut: process.env.NAVER_NID_AUT || jsonConfig.naverNidAut || '',
-        naverNidSes: process.env.NAVER_NID_SES || jsonConfig.naverNidSes || '',
-      },
+      credentials,
       storageDir: process.env.STORAGE_DIR || './storage',
       headless: process.env.HEADLESS !== 'false',
       timeout: Number(process.env.TIMEOUT) || 30000,

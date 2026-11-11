@@ -23,10 +23,18 @@ export class WebServer {
   private clientIdCounter = 0;
   private port: number;
 
-  constructor(port = 3105) {
+  constructor(port = (process.env.PORT ? parseInt(process.env.PORT, 10) : 13109)) {
     this.port = port;
     this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  private getPublicPath(): string {
+    const candidate1 = path.join(__dirname, 'public');
+    if (fs.existsSync(candidate1)) return candidate1;
+    const candidate2 = path.join(process.cwd(), 'src', 'modules', 'web', 'public');
+    if (fs.existsSync(candidate2)) return candidate2;
+    return candidate1;
   }
 
   private setupMiddleware() {
@@ -34,11 +42,9 @@ export class WebServer {
     this.app.use(express.urlencoded({ extended: true }));
     
     // Serve static frontend files
-    const publicPath = path.join(__dirname, 'public');
-    if (!fs.existsSync(publicPath)) {
-      fs.mkdirSync(publicPath, { recursive: true });
-    }
+    const publicPath = this.getPublicPath();
     this.app.use(express.static(publicPath));
+    this.app.use('/blog', express.static(publicPath));
   }
 
   private broadcastLog(level: 'info' | 'success' | 'warn' | 'error', message: string, data?: any) {
@@ -56,8 +62,10 @@ export class WebServer {
   }
 
   private setupRoutes() {
+    const apiRouter = express.Router();
+
     // SSE Stream for real-time logs
-    this.app.get('/api/stream', (req: Request, res: Response) => {
+    apiRouter.get('/stream', (req: Request, res: Response) => {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
@@ -75,7 +83,7 @@ export class WebServer {
     });
 
     // Get Current Configuration
-    this.app.get('/api/config', (_req: Request, res: Response) => {
+    apiRouter.get('/config', (_req: Request, res: Response) => {
       const config = ConfigService.getInstance().getConfig();
       const creds = config.credentials;
 
@@ -108,7 +116,7 @@ export class WebServer {
     });
 
     // Update Configuration
-    this.app.post('/api/config', (req: Request, res: Response) => {
+    apiRouter.post('/config', (req: Request, res: Response) => {
       const { notionApiKey, notionParentPageId, naverNidAut, naverNidSes } = req.body;
       
       const configService = ConfigService.getInstance();
@@ -124,7 +132,7 @@ export class WebServer {
     });
 
     // Single Post Extraction API
-    this.app.post('/api/extract/single', async (req: Request, res: Response) => {
+    apiRouter.post('/extract/single', async (req: Request, res: Response) => {
       const { url, exportToNotion } = req.body;
 
       if (!url) {
@@ -174,7 +182,7 @@ export class WebServer {
     });
 
     // Batch Extraction API
-    this.app.post('/api/extract/batch', async (req: Request, res: Response) => {
+    apiRouter.post('/extract/batch', async (req: Request, res: Response) => {
       const { blogUrlOrId, notionDatabaseUrlOrId, count = 5, pageNum = 1 } = req.body;
 
       if (!blogUrlOrId) {
@@ -207,6 +215,16 @@ export class WebServer {
         this.broadcastLog('error', `❌ Batch Extraction Failed: ${errMsg}`);
         res.status(500).json({ error: errMsg });
       }
+    });
+
+    // Mount API router to both '/api' and '/blog/api'
+    this.app.use('/api', apiRouter);
+    this.app.use('/blog/api', apiRouter);
+
+    // Serve HTML for '/blog'
+    const publicPath = this.getPublicPath();
+    this.app.get('/blog', (_req: Request, res: Response) => {
+      res.sendFile(path.join(publicPath, 'index.html'));
     });
   }
 

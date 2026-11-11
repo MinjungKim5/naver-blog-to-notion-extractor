@@ -293,6 +293,17 @@ export class NotionExporterService {
           });
           break;
 
+        case 'callout':
+          notionBlocks.push({
+            object: 'block',
+            type: 'callout',
+            callout: {
+              rich_text: this.toNotionRichText(block.content),
+              icon: block.icon ? { type: 'emoji', emoji: block.icon as any } : { type: 'emoji', emoji: '📍' },
+            },
+          });
+          break;
+
         case 'bookmark':
           notionBlocks.push({
             object: 'block',
@@ -303,12 +314,18 @@ export class NotionExporterService {
 
         case 'image':
           if (block.originalUrl.startsWith('http')) {
+            // Ensure URL is properly encoded without invalid characters like raw pipes or spaces
+            const safeUrl = block.originalUrl
+              .replace(/&amp;/g, '&')
+              .replace(/\|/g, '%7C')
+              .replace(/ /g, '%20');
+
             notionBlocks.push({
               object: 'block',
               type: 'image',
               image: {
                 type: 'external',
-                external: { url: block.originalUrl },
+                external: { url: safeUrl },
                 caption: block.caption ? [{ type: 'text', text: { content: block.caption } }] : [],
               },
             });
@@ -321,6 +338,47 @@ export class NotionExporterService {
             type: 'divider',
             divider: {},
           });
+          break;
+
+        case 'bulleted_list_item':
+          notionBlocks.push({
+            object: 'block',
+            type: 'bulleted_list_item',
+            bulleted_list_item: { rich_text: this.toNotionRichText(block.content) },
+          });
+          break;
+
+        case 'numbered_list_item':
+          notionBlocks.push({
+            object: 'block',
+            type: 'numbered_list_item',
+            numbered_list_item: { rich_text: this.toNotionRichText(block.content) },
+          });
+          break;
+
+        case 'code':
+          notionBlocks.push({
+            object: 'block',
+            type: 'code',
+            code: {
+              rich_text: [{ type: 'text', text: { content: (block.code || '').slice(0, 2000) } }],
+              language: this.normalizeNotionLanguage(block.language),
+            },
+          });
+          break;
+
+        case 'video':
+          if (block.url && block.url.startsWith('http')) {
+            notionBlocks.push({
+              object: 'block',
+              type: 'video',
+              video: {
+                type: 'external',
+                external: { url: block.url },
+                caption: block.caption ? [{ type: 'text', text: { content: block.caption } }] : [],
+              },
+            });
+          }
           break;
 
         case 'table':
@@ -369,10 +427,108 @@ export class NotionExporterService {
           strikethrough: seg.annotations?.strikethrough || false,
           underline: seg.annotations?.underline || false,
           code: seg.annotations?.code || false,
-          color: 'default',
+          color: this.mapToNotionColor(seg.annotations?.color),
         },
       };
     });
+  }
+
+  private mapToNotionColor(rawColor?: string): any {
+    if (!rawColor) return 'default';
+    const c = rawColor.trim().toLowerCase();
+
+    // Check for explicit background requests
+    const isBackground = c.includes('bg:') || c.includes('background') || c.includes('highlight');
+    const cleanColor = c.replace(/^bg:/, '').replace(/_background$/, '').replace(/^highlight[-_]?/, '').trim();
+
+    const colorName = this.detectColorName(cleanColor);
+    if (!colorName) return 'default';
+
+    return isBackground ? `${colorName}_background` : colorName;
+  }
+
+  private detectColorName(c: string): string | null {
+    if (c.includes('red') || c.includes('crimson') || c.includes('salmon')) return 'red';
+    if (c.includes('orange') || c.includes('coral')) return 'orange';
+    if (c.includes('yellow') || c.includes('gold')) return 'yellow';
+    if (c.includes('green') || c.includes('lime') || c.includes('teal')) return 'green';
+    if (c.includes('blue') || c.includes('cyan') || c.includes('sky') || c.includes('navy')) return 'blue';
+    if (c.includes('purple') || c.includes('violet') || c.includes('indigo') || c.includes('magenta')) return 'purple';
+    if (c.includes('pink') || c.includes('rose')) return 'pink';
+    if (c.includes('brown')) return 'brown';
+    if (c.includes('gray') || c.includes('grey') || c.includes('silver')) return 'gray';
+
+    // Parse RGB or Hex
+    let r = 0, g = 0, b = 0;
+    const rgbMatch = c.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+    if (rgbMatch) {
+      r = parseInt(rgbMatch[1], 10);
+      g = parseInt(rgbMatch[2], 10);
+      b = parseInt(rgbMatch[3], 10);
+    } else {
+      const hexMatch = c.match(/#([0-9a-f]{6}|[0-9a-f]{3})/i);
+      if (hexMatch) {
+        let hex = hexMatch[1];
+        if (hex.length === 3) {
+          hex = hex.split('').map(x => x + x).join('');
+        }
+        r = parseInt(hex.slice(0, 2), 16);
+        g = parseInt(hex.slice(2, 4), 16);
+        b = parseInt(hex.slice(4, 6), 16);
+      } else {
+        return null;
+      }
+    }
+
+    // Grayscale threshold
+    const diffRG = Math.abs(r - g);
+    const diffGB = Math.abs(g - b);
+    const diffRB = Math.abs(r - b);
+    if (diffRG < 30 && diffGB < 30 && diffRB < 30) {
+      if (r < 60) return 'default';
+      return 'gray';
+    }
+
+    // Dominant hues
+    if (r > g && r > b) {
+      if (g > 140 && b < 100) return 'yellow';
+      if (g > 70 && b < 70) return 'orange';
+      if (b > 110) return 'pink';
+      return 'red';
+    }
+    if (g > r && g > b) {
+      if (r > 140) return 'yellow';
+      if (b > 140) return 'blue';
+      return 'green';
+    }
+    if (b > r && b > g) {
+      if (r > 120) return 'purple';
+      return 'blue';
+    }
+
+    return null;
+  }
+
+  private normalizeNotionLanguage(lang?: string): any {
+    if (!lang) return 'plain text';
+    const l = lang.trim().toLowerCase();
+    const supported = [
+      'abap', 'arduino', 'bash', 'basic', 'c', 'clojure', 'coffeescript', 'c++', 'c#', 'css', 
+      'dart', 'diff', 'docker', 'elixir', 'elm', 'erlang', 'flow', 'fortran', 'f#', 'gherkin', 
+      'glsl', 'go', 'graphql', 'groovy', 'haskell', 'html', 'java', 'javascript', 'json', 
+      'julia', 'kotlin', 'latex', 'less', 'lisp', 'livescript', 'lua', 'makefile', 'markdown', 
+      'markup', 'matlab', 'mermaid', 'nix', 'objective-c', 'ocaml', 'pascal', 'perl', 'php', 
+      'plain text', 'powershell', 'prolog', 'protobuf', 'python', 'r', 'reason', 'ruby', 'rust', 
+      'sass', 'scala', 'scheme', 'scss', 'shell', 'sql', 'swift', 'typescript', 'vb.net', 
+      'verilog', 'vhdl', 'visual basic', 'webassembly', 'xml', 'yaml'
+    ];
+    if (supported.includes(l)) return l;
+    if (l === 'js') return 'javascript';
+    if (l === 'ts') return 'typescript';
+    if (l === 'py') return 'python';
+    if (l === 'sh') return 'shell';
+    if (l === 'yml') return 'yaml';
+    return 'plain text';
   }
 
   private formatNotionDate(dateStr?: string): string | null {

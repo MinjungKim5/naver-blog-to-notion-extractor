@@ -8,7 +8,11 @@ export type BlockType =
   | 'callout' 
   | 'bookmark' 
   | 'table' 
-  | 'divider';
+  | 'divider'
+  | 'bulleted_list_item'
+  | 'numbered_list_item'
+  | 'code'
+  | 'video';
 
 export interface TextAnnotations {
   bold?: boolean;
@@ -82,6 +86,28 @@ export interface DividerBlock extends BaseBlock {
   type: 'divider';
 }
 
+export interface BulletedListItemBlock extends BaseBlock {
+  type: 'bulleted_list_item';
+  content: RichTextSegment[];
+}
+
+export interface NumberedListItemBlock extends BaseBlock {
+  type: 'numbered_list_item';
+  content: RichTextSegment[];
+}
+
+export interface CodeBlock extends BaseBlock {
+  type: 'code';
+  code: string;
+  language?: string;
+}
+
+export interface VideoBlock extends BaseBlock {
+  type: 'video';
+  url: string;
+  caption?: string;
+}
+
 export type UnifiedBlock = 
   | HeadingBlock 
   | ParagraphBlock 
@@ -90,7 +116,11 @@ export type UnifiedBlock =
   | CalloutBlock 
   | BookmarkBlock 
   | TableBlock 
-  | DividerBlock;
+  | DividerBlock
+  | BulletedListItemBlock
+  | NumberedListItemBlock
+  | CodeBlock
+  | VideoBlock;
 
 export interface UnifiedDocument {
   title: string;

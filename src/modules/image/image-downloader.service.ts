@@ -12,6 +12,14 @@ export class ImageDownloaderService {
   public normalizeNaverImageUrl(url: string): string {
     if (!url) return '';
 
+    // If it's a Naver Static Map API URL, preserve query params and ensure proper URI encoding
+    if (url.includes('staticmap.bin') || url.includes('static.map')) {
+      return url
+        .replace(/&amp;/g, '&')
+        .replace(/\|/g, '%7C')
+        .replace(/ /g, '%20');
+    }
+
     // Decode escaped characters if any
     let cleanUrl = decodeURIComponent(url);
     
